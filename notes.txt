@@ -1,0 +1,3 @@
+Element Type on TS:
+https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/react/global.d.ts
+
