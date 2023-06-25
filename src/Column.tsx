@@ -2,7 +2,7 @@ import { useAppState} from './state/AppStateContext';
 import { ColumnContainer, ColumnTitle } from "./styles";
 import { AddNewItem } from './AddNewItem';
 import { Card } from './Card';
-import { addTask, moveList } from './state/actions';
+import { addTask, moveList, moveTask, setDraggedItem } from './state/actions';
 import {useItemDrag} from './utils/useItemDrag'
 import { useRef } from 'react';
 import { useDrop } from 'react-dnd';
@@ -20,19 +20,30 @@ export const Column = ({ text, id, isPreview }: ColumnProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const [,drop] = useDrop({
-    accept: "COLUMN",
+    accept: ["COLUMN", "CARD"],
     hover() {
       if (!draggedItem) {
         return;
       }
 
-      if(draggedItem.type === "COLUMN") {
-        if(draggedItem.id === id) {
+      if (draggedItem.type === "COLUMN") {
+        if (draggedItem.type === "COLUMN") {
+          if (draggedItem.id === id) {
+            return;
+          }
+          dispatch(moveList(draggedItem.id, id));
+        }
+      } else {
+        if (draggedItem.columnId === id) {
           return;
         }
-
-        dispatch(moveList(draggedItem.id, id))
+        if (tasks.length) {
+          return;
+        }
+        dispatch(moveTask(draggedItem.id, null, draggedItem.columnId, id));
+        dispatch(setDraggedItem({ ...draggedItem, columnId: id }));
       }
+      
     }
   })
   
@@ -41,10 +52,10 @@ export const Column = ({ text, id, isPreview }: ColumnProps) => {
   drag(drop(ref))
 
   return (
-    <ColumnContainer ref={ref} isHidden={isHidden(draggedItem, "COLUMN", id, isPreview)}>
+    <ColumnContainer isPreview={isPreview} ref={ref} isHidden={isHidden(draggedItem, "COLUMN", id, isPreview)}>
       <ColumnTitle>{text}</ColumnTitle>
       {tasks.map((task) => (
-        <Card text={task.text} key={task.id} id={task.id} />
+        <Card text={task.text} key={task.id} columnId={id} id={task.id} />
       ))}
       <AddNewItem toggleButtonText="+ add another task" onAdd={(text) => dispatch(addTask(text, id))} dark />
     </ColumnContainer>
